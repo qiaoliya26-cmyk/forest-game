@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>森林小管家</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* 水平居中 */
+            background-image: url("https://imgtu.com/uploads/vsojv7ml/r-file_fd7a78.webp");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .game-title {
+            font-family: "Comic Sans MS", "Marker Felt", "微软雅黑", sans-serif;
+            font-size: 75px;
+            color: rgba(0, 0, 0, 0.8);
+            margin-top: 160px; /* 标题距离顶部位置不变 */
+            margin-bottom: 0;
+            text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.6);
+        }
+
+        /* 按钮上移：通过减少顶部间距实现 */
+        .start-button {
+            background-color: #FF9800;
+            color: white;
+            font-size: 28px;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            font-family: "Comic Sans MS", "微软雅黑", sans-serif;
+            /* 关键调整：顶部间距设为40px（比之前的auto更靠上），底部间距0 */
+            margin-top: 140px; 
+            margin-bottom: 0;
+        }
+
+        .start-button:hover {
+            background-color: #FF5722;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <h1 class="game-title">森林小管家</h1>
+    <!-- 点击按钮跳转到关卡一页面（替换原alert） -->
+    <button class="start-button" onclick="goToLevel1()">开始游戏</button>
+
+    <script>
+        // 跳转函数：点击后进入关卡一页面
+        function goToLevel1() {
+            // 假设关卡一的HTML文件名为"level1.html"，且与首页在同一文件夹
+            window.location.href = "level1.html";
+        }
+    </script>
+</body>
+</html>
