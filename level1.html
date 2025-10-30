@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>关卡一：帮小动物找家</title>
     <style>
-        /* 保持原有样式不变 */
+        /* 基础样式保持不变 */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html, body { height: 100vh; width: 100vw; font-family: "Comic Sans MS", "微软雅黑", sans-serif; background-color: #f0f8ff; overflow: hidden; }
         .intro-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; cursor: pointer; }
@@ -15,6 +15,9 @@
         @keyframes fadeIn { to { opacity: 1; } }
         @keyframes pop { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes fall { 0% { transform: translateY(calc(-100px - var(--random-top))) rotate(0deg); opacity: 1; } 100% { transform: translateY(calc(100vh + 100px)) rotate(var(--random-rotate)); opacity: 0; } }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* 游戏容器样式 */
         .game-container { display: none; height: 100vh; width: 100vw; padding: 20px; gap: 20px; flex-direction: row; }
         .operate-tip { font-size: 18px; color: #2e7d32; text-align: center; margin-bottom: 15px; padding: 8px 0; border-radius: 8px; background-color: rgba(255,255,255,0.7); }
         .homes-area { flex: 1; background-color: #e8f5e9; border-radius: 15px; padding: 20px; overflow-y: auto; box-shadow: 0 4px 8px rgba(0,0,0,0.1); height: 100%; min-height: 0; }
@@ -22,11 +25,15 @@
         .home-img, .home-occupied { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; display: block; }
         .home-occupied { position: absolute; top: 0; left: 0; display: none; }
         .home-matched-name { position: absolute; bottom: 0; left: 0; width: 100%; font-size: 18px; color: #388e3c; font-weight: bold; display: none; background-color: rgba(255,255,255,0.8); padding: 5px 0; }
+        
+        /* 动物区域样式 */
         .animals-area { width: 220px; background-color: #fff3e0; border-radius: 15px; padding: 15px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); overflow-y: auto; height: 100%; min-height: 0; }
         .animal { background-color: white; border: 1px solid #ffe0b2; border-radius: 8px; padding: 10px; text-align: center; cursor: grab; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: opacity 0.3s; width: 100%; max-width: 180px; margin: 0 auto; aspect-ratio: 4/5; position: relative; }
         .animal:active { cursor: grabbing; }
         .animal-img { width: 100%; height: 100%; object-fit: contain; border-radius: 4px; display: block; }
         .animal.matched { opacity: 0.5; cursor: default; }
+        
+        /* 提示和加载样式 */
         .toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 20px 40px; font-size: 28px; font-weight: bold; border-radius: 10px; color: white; z-index: 100; display: none; animation: pop 0.3s forwards; }
         .toast.correct { background-color: #4caf50; }
         .toast.wrong { background-color: #f44336; }
@@ -36,8 +43,45 @@
         .restart-btn { padding: 10px 20px; font-size: 20px; background-color: white; color: #3f51b5; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background-color 0.3s; }
         .restart-btn:hover { background-color: #f0f0f0; }
         .browser-tip { position: fixed; bottom: 20px; font-size: 14px; color: #666; text-align: center; width: 100%; z-index: 999; display: none; }
-        /* 新增：图片加载占位样式 */
-        .img-placeholder { background-color: #f0f0f0; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cpath fill='%23ddd' fill-opacity='0.4' d='M10 10c0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6h2c0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6v2c0-3.314-2.686-6-6-6-2.21 0-4-1.79-4-4 0-2.21-1.79-4-4-4zm20 20c0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6h2c0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6v2c0-3.314-2.686-6-6-6-2.21 0-4-1.79-4-4 0-2.21-1.79-4-4-4z'%3E%3C/path%3E%3C/svg%3E"); }
+        
+        /* 加载状态优化 */
+        .img-loading { 
+            background: #f0f0f0 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cpath fill='%23ddd' fill-opacity='0.4' d='M10 10c0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6h2c0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6v2c0-3.314-2.686-6-6-6-2.21 0-4-1.79-4-4 0-2.21-1.79-4-4-4zm20 20c0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6h2c0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6v2c0-3.314-2.686-6-6-6-2.21 0-4-1.79-4-4 0-2.21-1.79-4-4-4z'%3E%3C/path%3E%3C/svg%3E") center no-repeat; 
+        }
+        .loading-spinner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(66, 165, 245, 0.3);
+            border-radius: 50%;
+            border-top-color: #42a5f5;
+            animation: spin 1s ease-in-out infinite;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+        img { 
+            opacity: 0; 
+            transition: opacity 0.3s ease-in-out;
+        }
+        img.loaded { 
+            opacity: 1; 
+        }
+        .load-error {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #fff3e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #e53935;
+            font-size: 14px;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -56,75 +100,107 @@
     <div class="game-container">
         <div class="homes-area" id="homes-area">
             <div class="operate-tip" id="homes-tip">🏠 找到小动物的家</div>
-            <!-- 家园列表（使用data-src实现懒加载，初始不加载图片） -->
-            <div class="home" ondragover="allowDrop(event)" ondrop="checkMatch(event, 'woodpecker', '啄木鸟的家')">
-                <div class="home-img img-placeholder" data-src="https://i.ibb.co/xt8S0fmG/min.png"></div>
-                <div class="home-occupied img-placeholder" data-src="https://i.ibb.co/zhyG301M/min.png"></div>
+            <!-- 家园列表：分批次加载 -->
+            <div class="home" data-home-id="1">
+                <div class="loading-spinner"></div>
+                <div class="load-error">加载失败，点击重试</div>
+                <img class="home-img img-loading" data-src="https://i.ibb.co/xt8S0fmG/min.png" alt="啄木鸟的家" onload="this.classList.add('loaded'); hideSpinner(this)">
+                <img class="home-occupied img-loading" data-src="https://i.ibb.co/zhyG301M/min.png" alt="啄木鸟在家" onload="this.classList.add('loaded')">
                 <div class="home-matched-name">啄木鸟的家</div>
             </div>
-            <div class="home" ondragover="allowDrop(event)" ondrop="checkMatch(event, 'bear', '熊的洞穴')">
-                <div class="home-img img-placeholder" data-src="https://i.ibb.co/JgLk3gs/min.png"></div>
-                <div class="home-occupied img-placeholder" data-src="https://i.ibb.co/8DBPNbyH/min.png"></div>
+            <div class="home" data-home-id="2">
+                <div class="loading-spinner"></div>
+                <div class="load-error">加载失败，点击重试</div>
+                <img class="home-img img-loading" data-src="https://i.ibb.co/JgLk3gs/min.png" alt="熊的洞穴" onload="this.classList.add('loaded'); hideSpinner(this)">
+                <img class="home-occupied img-loading" data-src="https://i.ibb.co/8DBPNbyH/min.png" alt="熊在家" onload="this.classList.add('loaded')">
                 <div class="home-matched-name">熊的洞穴</div>
             </div>
-            <div class="home" ondragover="allowDrop(event)" ondrop="checkMatch(event, 'fish', '鱼的家')">
-                <div class="home-img img-placeholder" data-src="https://i.ibb.co/BkKNVPG/min.png"></div>
-                <div class="home-occupied img-placeholder" data-src="https://i.ibb.co/whbgqsTD/min.png"></div>
+            <div class="home" data-home-id="3">
+                <div class="loading-spinner"></div>
+                <div class="load-error">加载失败，点击重试</div>
+                <img class="home-img img-loading" data-src="https://i.ibb.co/BkKNVPG/min.png" alt="鱼的家" onload="this.classList.add('loaded'); hideSpinner(this)">
+                <img class="home-occupied img-loading" data-src="https://i.ibb.co/whbgqsTD/min.png" alt="鱼在家" onload="this.classList.add('loaded')">
                 <div class="home-matched-name">鱼的家</div>
             </div>
-            <div class="home" ondragover="allowDrop(event)" ondrop="checkMatch(event, 'magpie', '喜鹊的巢')">
-                <div class="home-img img-placeholder" data-src="https://i.ibb.co/60ysVnCm/min.png"></div>
-                <div class="home-occupied img-placeholder" data-src="https://i.ibb.co/r26xcP5L/min.png"></div>
+            <div class="home" data-home-id="4">
+                <div class="loading-spinner"></div>
+                <div class="load-error">加载失败，点击重试</div>
+                <img class="home-img img-loading" data-src="https://i.ibb.co/60ysVnCm/min.png" alt="喜鹊的巢" onload="this.classList.add('loaded'); hideSpinner(this)">
+                <img class="home-occupied img-loading" data-src="https://i.ibb.co/r26xcP5L/min.png" alt="喜鹊在家" onload="this.classList.add('loaded')">
                 <div class="home-matched-name">喜鹊的巢</div>
             </div>
-            <div class="home" ondragover="allowDrop(event)" ondrop="checkMatch(event, 'hermit-crab', '寄居蟹的家')">
-                <div class="home-img img-placeholder" data-src="https://i.ibb.co/zVpRMBcV/min.png"></div>
-                <div class="home-occupied img-placeholder" data-src="https://i.ibb.co/MkZg2BCm/min.png"></div>
+            <div class="home" data-home-id="5">
+                <div class="loading-spinner"></div>
+                <div class="load-error">加载失败，点击重试</div>
+                <img class="home-img img-loading" data-src="https://i.ibb.co/zVpRMBcV/min.png" alt="寄居蟹的家" onload="this.classList.add('loaded'); hideSpinner(this)">
+                <img class="home-occupied img-loading" data-src="https://i.ibb.co/MkZg2BCm/min.png" alt="寄居蟹在家" onload="this.classList.add('loaded')">
                 <div class="home-matched-name">寄居蟹的家</div>
             </div>
-            <div class="home" ondragover="allowDrop(event)" ondrop="checkMatch(event, 'rabbit', '兔子的洞穴')">
-                <div class="home-img img-placeholder" data-src="https://i.ibb.co/mCySYBFz/min.png"></div>
-                <div class="home-occupied img-placeholder" data-src="https://i.ibb.co/LwMRghC/min.png"></div>
+            <div class="home" data-home-id="6">
+                <div class="loading-spinner"></div>
+                <div class="load-error">加载失败，点击重试</div>
+                <img class="home-img img-loading" data-src="https://i.ibb.co/mCySYBFz/min.png" alt="兔子的洞穴" onload="this.classList.add('loaded'); hideSpinner(this)">
+                <img class="home-occupied img-loading" data-src="https://i.ibb.co/LwMRghC/min.png" alt="兔子在家" onload="this.classList.add('loaded')">
                 <div class="home-matched-name">兔子的洞穴</div>
             </div>
-            <div class="home" ondragover="allowDrop(event)" ondrop="checkMatch(event, 'squirrel', '松鼠的洞穴')">
-                <div class="home-img img-placeholder" data-src="https://i.ibb.co/ynQtcQ74/min.png"></div>
-                <div class="home-occupied img-placeholder" data-src="https://i.ibb.co/Nnp62xhF/min.png"></div>
+            <div class="home" data-home-id="7">
+                <div class="loading-spinner"></div>
+                <div class="load-error">加载失败，点击重试</div>
+                <img class="home-img img-loading" data-src="https://i.ibb.co/ynQtcQ74/min.png" alt="松鼠的洞穴" onload="this.classList.add('loaded'); hideSpinner(this)">
+                <img class="home-occupied img-loading" data-src="https://i.ibb.co/Nnp62xhF/min.png" alt="松鼠在家" onload="this.classList.add('loaded')">
                 <div class="home-matched-name">松鼠的洞穴</div>
             </div>
-            <div class="home" ondragover="allowDrop(event)" ondrop="checkMatch(event, 'bee', '蜜蜂的巢')">
-                <div class="home-img img-placeholder" data-src="https://i.ibb.co/LzbpXVFv/min.png"></div>
-                <div class="home-occupied img-placeholder" data-src="https://i.ibb.co/WvhRpSZw/min.png"></div>
+            <div class="home" data-home-id="8">
+                <div class="loading-spinner"></div>
+                <div class="load-error">加载失败，点击重试</div>
+                <img class="home-img img-loading" data-src="https://i.ibb.co/LzbpXVFv/min.png" alt="蜜蜂的巢" onload="this.classList.add('loaded'); hideSpinner(this)">
+                <img class="home-occupied img-loading" data-src="https://i.ibb.co/WvhRpSZw/min.png" alt="蜜蜂在家" onload="this.classList.add('loaded')">
                 <div class="home-matched-name">蜜蜂的巢</div>
             </div>
         </div>
 
         <div class="animals-area" id="animals-area">
             <div class="operate-tip" id="animals-tip">📥 拖动小动物回家</div>
-            <!-- 动物列表（首屏优先加载，使用img标签直接加载） -->
+            <!-- 动物列表：优先同步加载 -->
             <div class="animal" draggable="true" ondragstart="setDragged(event, 'bee')">
-                <img class="animal-img" src="https://i.ibb.co/RGJF1VxQ/min.png" alt="蜜蜂">
+                <div class="loading-spinner"></div>
+                <div class="load-error">加载失败，点击重试</div>
+                <img class="animal-img img-loading" src="https://i.ibb.co/RGJF1VxQ/min.png" alt="蜜蜂" onload="this.classList.add('loaded'); hideSpinner(this)" onerror="showError(this)">
             </div>
             <div class="animal" draggable="true" ondragstart="setDragged(event, 'rabbit')">
-                <img class="animal-img" src="https://i.ibb.co/8gL9YGRN/min.png" alt="兔子">
+                <div class="loading-spinner"></div>
+                <div class="load-error">加载失败，点击重试</div>
+                <img class="animal-img img-loading" src="https://i.ibb.co/8gL9YGRN/min.png" alt="兔子" onload="this.classList.add('loaded'); hideSpinner(this)" onerror="showError(this)">
             </div>
             <div class="animal" draggable="true" ondragstart="setDragged(event, 'bear')">
-                <img class="animal-img" src="https://i.ibb.co/BKcKqZMf/min.png" alt="熊">
+                <div class="loading-spinner"></div>
+                <div class="load-error">加载失败，点击重试</div>
+                <img class="animal-img img-loading" src="https://i.ibb.co/BKcKqZMf/min.png" alt="熊" onload="this.classList.add('loaded'); hideSpinner(this)" onerror="showError(this)">
             </div>
             <div class="animal" draggable="true" ondragstart="setDragged(event, 'squirrel')">
-                <img class="animal-img" src="https://i.ibb.co/sLvdkMd/min.png" alt="松鼠">
+                <div class="loading-spinner"></div>
+                <div class="load-error">加载失败，点击重试</div>
+                <img class="animal-img img-loading" src="https://i.ibb.co/sLvdkMd/min.png" alt="松鼠" onload="this.classList.add('loaded'); hideSpinner(this)" onerror="showError(this)">
             </div>
             <div class="animal" draggable="true" ondragstart="setDragged(event, 'fish')">
-                <img class="animal-img" src="https://i.ibb.co/dwM8hzdX/min.png" alt="鱼">
+                <div class="loading-spinner"></div>
+                <div class="load-error">加载失败，点击重试</div>
+                <img class="animal-img img-loading" src="https://i.ibb.co/dwM8hzdX/min.png" alt="鱼" onload="this.classList.add('loaded'); hideSpinner(this)" onerror="showError(this)">
             </div>
             <div class="animal" draggable="true" ondragstart="setDragged(event, 'hermit-crab')">
-                <img class="animal-img" src="https://i.ibb.co/6d7bVWj/min.png" alt="寄居蟹">
+                <div class="loading-spinner"></div>
+                <div class="load-error">加载失败，点击重试</div>
+                <img class="animal-img img-loading" src="https://i.ibb.co/6d7bVWj/min.png" alt="寄居蟹" onload="this.classList.add('loaded'); hideSpinner(this)" onerror="showError(this)">
             </div>
             <div class="animal" draggable="true" ondragstart="setDragged(event, 'magpie')">
-                <img class="animal-img" src="https://i.ibb.co/nMMhs1wQ/min.png" alt="喜鹊">
+                <div class="loading-spinner"></div>
+                <div class="load-error">加载失败，点击重试</div>
+                <img class="animal-img img-loading" src="https://i.ibb.co/nMMhs1wQ/min.png" alt="喜鹊" onload="this.classList.add('loaded'); hideSpinner(this)" onerror="showError(this)">
             </div>
             <div class="animal" draggable="true" ondragstart="setDragged(event, 'woodpecker')">
-                <img class="animal-img" src="https://i.ibb.co/bRvNXqcJ/min.png" alt="啄木鸟">
+                <div class="loading-spinner"></div>
+                <div class="load-error">加载失败，点击重试</div>
+                <img class="animal-img img-loading" src="https://i.ibb.co/bRvNXqcJ/min.png" alt="啄木鸟" onload="this.classList.add('loaded'); hideSpinner(this)" onerror="showError(this)">
             </div>
         </div>
     </div>
@@ -144,7 +220,7 @@
         let preferredVoice = null;
         let isVoiceInitialized = false;
         let isAutoSpoken = false;
-        let lazyLoadObserver = null; // 懒加载观察器
+        const maxRetryCount = 3; // 最大重试次数
 
         // 初始化语音列表
         function initVoices() {
@@ -201,41 +277,6 @@
             setTimeout(() => browserTip.style.display = 'none', 5000);
         }
 
-        // 初始化懒加载（核心优化）
-        function initLazyLoad() {
-            // 观察元素是否进入视口
-            lazyLoadObserver = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const element = entry.target;
-                        const src = element.getAttribute('data-src');
-                        if (src) {
-                            // 替换为img标签加载图片
-                            const img = document.createElement('img');
-                            img.src = src;
-                            img.className = element.className.replace('img-placeholder', '');
-                            img.alt = element.parentElement.querySelector('.home-matched-name').textContent;
-                            // 图片加载完成后替换占位元素
-                            img.onload = () => {
-                                element.parentNode.replaceChild(img, element);
-                            };
-                            // 加载失败时重试一次
-                            img.onerror = () => {
-                                setTimeout(() => img.src = src, 1000);
-                            };
-                        }
-                        // 停止观察已处理的元素
-                        lazyLoadObserver.unobserve(element);
-                    }
-                });
-            }, { rootMargin: '200px 0px' }); // 提前200px开始加载
-
-            // 监听所有需要懒加载的元素
-            document.querySelectorAll('[data-src]').forEach(element => {
-                lazyLoadObserver.observe(element);
-            });
-        }
-
         // 页面加载完成后初始化
         window.onload = function() {
             setTimeout(() => {
@@ -253,10 +294,9 @@
             }, 500);
         };
 
-        // 音效预加载（优化加载顺序）
+        // 音效预加载
         const successSound = new Audio('success.wav');
         const failSound = new Audio('fail.wav');
-        // 提前加载音效但不播放
         successSound.preload = 'auto';
         failSound.preload = 'auto';
 
@@ -270,12 +310,85 @@
             window.speechSynthesis.cancel();
             document.querySelector('.intro-screen').style.display = 'none';
             document.querySelector('.game-container').style.display = 'flex';
-            // 游戏开始后初始化懒加载
-            initLazyLoad();
+
+            // 分批次加载家园图片（避免同时请求过多）
+            loadHomesInBatches();
 
             setTimeout(() => {
                 speakText("拖动小动物找到他的家", { rate: 0.9, pitch: 1.2 });
             }, 500);
+        }
+
+        // 分批次加载家园图片（核心优化）
+        function loadHomesInBatches() {
+            const homes = document.querySelectorAll('.home');
+            const batchSize = 2; // 每批加载2个
+            const delayBetweenBatches = 500; // 批次间隔500ms
+
+            // 按批次加载
+            for (let i = 0; i < homes.length; i += batchSize) {
+                const batch = Array.from(homes).slice(i, i + batchSize);
+                setTimeout(() => {
+                    batch.forEach(home => {
+                        // 为图片设置src开始加载
+                        const homeImg = home.querySelector('.home-img');
+                        const occupiedImg = home.querySelector('.home-occupied');
+                        homeImg.src = homeImg.dataset.src;
+                        occupiedImg.src = occupiedImg.dataset.src;
+                        
+                        // 绑定错误处理
+                        homeImg.onerror = function() {
+                            showError(this);
+                            setupRetry(this);
+                        };
+                        occupiedImg.onerror = function() {
+                            setupRetry(this);
+                        };
+                    });
+                }, (i / batchSize) * delayBetweenBatches);
+            }
+        }
+
+        // 隐藏加载动画
+        function hideSpinner(imgElement) {
+            const spinner = imgElement.closest('.home, .animal').querySelector('.loading-spinner');
+            if (spinner) spinner.style.display = 'none';
+        }
+
+        // 显示加载错误
+        function showError(imgElement) {
+            const container = imgElement.closest('.home, .animal');
+            const spinner = container.querySelector('.loading-spinner');
+            const errorDiv = container.querySelector('.load-error');
+            
+            spinner.style.display = 'none';
+            errorDiv.style.display = 'flex';
+        }
+
+        // 设置重试功能
+        function setupRetry(imgElement) {
+            const container = imgElement.closest('.home, .animal');
+            const errorDiv = container.querySelector('.load-error');
+            let retryCount = 0;
+
+            errorDiv.onclick = function() {
+                if (retryCount >= maxRetryCount) {
+                    errorDiv.textContent = '加载失败，请稍后再试';
+                    return;
+                }
+
+                // 重新显示加载动画
+                const spinner = container.querySelector('.loading-spinner');
+                spinner.style.display = 'block';
+                errorDiv.style.display = 'none';
+
+                // 重新加载图片
+                imgElement.src = ''; // 清空src触发重新加载
+                setTimeout(() => {
+                    imgElement.src = imgElement.dataset.src || imgElement.src;
+                    retryCount++;
+                }, 500);
+            };
         }
 
         // 记录拖拽动物
@@ -283,10 +396,25 @@
             if (!matchedAnimals.has(animalId)) draggedAnimal = animalId;
         }
 
-        // 允许放置
-        function allowDrop(event) {
-            event.preventDefault();
-        }
+        // 允许放置（绑定拖拽事件）
+        document.querySelectorAll('.home').forEach(home => {
+            home.ondragover = function(e) { e.preventDefault(); };
+            home.ondrop = function(e) {
+                e.preventDefault();
+                const homeId = this.querySelector('.home-matched-name').textContent;
+                const animalKey = {
+                    '啄木鸟的家': 'woodpecker',
+                    '熊的洞穴': 'bear',
+                    '鱼的家': 'fish',
+                    '喜鹊的巢': 'magpie',
+                    '寄居蟹的家': 'hermit-crab',
+                    '兔子的洞穴': 'rabbit',
+                    '松鼠的洞穴': 'squirrel',
+                    '蜜蜂的巢': 'bee'
+                }[homeId];
+                checkMatch(e, animalKey, homeId);
+            };
+        });
 
         // 表情下落效果
         function createFallingIcons(isCorrect, count = 15) {
@@ -362,35 +490,28 @@
         // 重新开始游戏
         function restartGame() {
             window.speechSynthesis.cancel();
-            // 停止懒加载观察器
-            if (lazyLoadObserver) {
-                lazyLoadObserver.disconnect();
-                lazyLoadObserver = null;
-            }
             document.getElementById('complete-toast').style.display = 'none';
             document.querySelector('.intro-screen').style.display = 'flex';
             document.querySelector('.game-container').style.display = 'none';
             matchedAnimals.clear();
             isAutoSpoken = false;
 
-            // 重置图片为占位元素（重新启用懒加载）
+            // 重置图片状态
+            document.querySelectorAll('.home, .animal').forEach(container => {
+                const imgs = container.querySelectorAll('img');
+                imgs.forEach(img => {
+                    img.classList.remove('loaded');
+                    img.style.display = 'block';
+                    // 重新设置src触发加载（保留已加载的缓存）
+                    if (img.dataset.src) img.src = img.dataset.src;
+                });
+                container.querySelector('.loading-spinner').style.display = 'block';
+                container.querySelector('.load-error').style.display = 'none';
+            });
+
             document.querySelectorAll('.home').forEach(home => {
-                const imgContainer = home.querySelector('.home-img');
-                if (imgContainer.tagName === 'IMG') {
-                    const src = imgContainer.src;
-                    const placeholder = document.createElement('div');
-                    placeholder.className = 'home-img img-placeholder';
-                    placeholder.setAttribute('data-src', src);
-                    home.replaceChild(placeholder, imgContainer);
-                }
-                const occupiedContainer = home.querySelector('.home-occupied');
-                if (occupiedContainer.tagName === 'IMG') {
-                    const src = occupiedContainer.src;
-                    const placeholder = document.createElement('div');
-                    placeholder.className = 'home-occupied img-placeholder';
-                    placeholder.setAttribute('data-src', src);
-                    home.replaceChild(placeholder, occupiedContainer);
-                }
+                home.querySelector('.home-img').style.display = 'block';
+                home.querySelector('.home-occupied').style.display = 'none';
                 home.querySelector('.home-matched-name').style.display = 'none';
             });
 
