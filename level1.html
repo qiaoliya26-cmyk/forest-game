@@ -5,423 +5,244 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>关卡一：帮小动物找家</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html, body {
-            height: 100vh;
-            width: 100vw;
-            font-family: "Comic Sans MS", "微软雅黑", sans-serif;
-            background-color: #f0f8ff;
-            overflow: hidden;
-        }
-
-        /* 初始文字动画区域 */
-        .intro-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.95);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            cursor: pointer;
-        }
-
-        .intro-text {
-            font-size: 50px;
-            color: #2e7d32;
-            text-align: center;
-            margin: 0 20px;
-            animation: bounce 2s infinite ease-in-out;
-        }
-
-        .intro-subtext {
-            font-size: 24px;
-            color: #558b2f;
-            margin-top: 20px;
-            animation: fadeIn 1.5s forwards;
-            opacity: 0;
-        }
-
-        /* 动画关键帧 */
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
-        }
-
-        @keyframes fadeIn {
-            to { opacity: 1; }
-        }
-
-        @keyframes pop {
-            0% { transform: scale(0.8); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        @keyframes fall {
-            0% { 
-                transform: translateY(calc(-100px - var(--random-top))) rotate(0deg); 
-                opacity: 1; 
-            }
-            100% { 
-                transform: translateY(calc(100vh + 100px)) rotate(var(--random-rotate)); 
-                opacity: 0; 
-            }
-        }
-
-        /* 游戏容器 */
-        .game-container {
-            display: none;
-            height: 100vh;
-            width: 100vw;
-            padding: 20px;
-            gap: 20px;
-            flex-direction: row;
-        }
-
-        /* 操作提示样式：统一风格 */
-        .operate-tip {
-            font-size: 18px;
-            color: #2e7d32;
-            text-align: center;
-            margin-bottom: 15px;
-            padding: 8px 0;
-            border-radius: 8px;
-            background-color: rgba(255,255,255,0.7);
-        }
-
-        /* 家园区域：左侧添加提示，边框改为藤蔓风格 */
-        .homes-area {
-            /* 宽度自适应剩余空间，不再固定flex比例 */
-            flex: 1;
-            background-color: #e8f5e9;
-            border-radius: 15px;
-            padding: 20px;
-            overflow-y: auto;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            height: 100%;
-            min-height: 0;
-        }
-
-        /* 核心：家园藤蔓边框（用森林藤蔓图片作为边框） */
-        .home {
-            background-color: white;
-            /* 藤蔓边框：使用透明藤蔓图片，设置边框宽度和切片 */
-            border: 8px solid transparent;
-            border-image: url('https://www.transparenttextures.com/patterns/vines.png') 30 stretch;
-            border-radius: 12px;
-            padding: 0;
-            margin-bottom: 20px;
-            text-align: center;
-            position: relative;
-            width: 100%;
-            aspect-ratio: 3/2;
-        }
-
-        .home-img, .home-occupied {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 4px; /* 适配藤蔓边框内边距 */
-            display: block;
-        }
-
-        .home-occupied {
-            position: absolute;
-            top: 0;
-            left: 0;
-            display: none;
-        }
-
-        .home-matched-name {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            font-size: 18px;
-            color: #388e3c;
-            font-weight: bold;
-            display: none;
-            background-color: rgba(255,255,255,0.8);
-            padding: 5px 0;
-        }
-
-        /* 动物区域（右侧）：宽度缩减至适配图片，添加提示，强化白底 */
-        .animals-area {
-            /* 关键：固定宽度，与动物图片（max-width:180px）适配，含padding总宽220px */
-            width: 220px;
-            background-color: #fff3e0;
-            border-radius: 15px;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            overflow-y: auto;
-            height: 100%;
-            min-height: 0;
-        }
-
-        /* 动物格子：完全填充白色背景，无多余空隙 */
-        .animal {
-            background-color: white; /* 纯白背景填充 */
-            border: 1px solid #ffe0b2;
-            border-radius: 8px;
-            padding: 10px; /* 内边距保持，形成白底边框感 */
-            text-align: center;
-            cursor: grab;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            transition: opacity 0.3s;
-            width: 100%;
-            max-width: 180px; /* 与动物图片尺寸适配 */
-            margin: 0 auto;
-            aspect-ratio: 4/5; /* 保持原有比例 */
-            position: relative;
-        }
-
-        .animal:active {
-            cursor: grabbing;
-        }
-
-        /* 动物图片：完整显示在白底内 */
-        .animal-img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            border-radius: 4px;
-            display: block;
-        }
-
-        .animal.matched {
-            opacity: 0.5;
-            cursor: default;
-        }
-
-        /* 提示框 */
-        .toast {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            padding: 20px 40px;
-            font-size: 28px;
-            font-weight: bold;
-            border-radius: 10px;
-            color: white;
-            z-index: 100;
-            display: none;
-            animation: pop 0.3s forwards;
-        }
-
-        .toast.correct {
-            background-color: #4caf50;
-        }
-
-        .toast.wrong {
-            background-color: #f44336;
-        }
-
-        /* 飘落表情 */
-        .falling-icon {
-            position: fixed;
-            font-size: var(--random-size);
-            pointer-events: none;
-            z-index: 90;
-            --random-top: 0px;
-            --random-rotate: 0deg;
-            --random-size: 30px;
-        }
-
-        /* 完成提示 */
-        .complete-toast {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(63, 81, 181, 0.9);
-            padding: 30px 50px;
-            border-radius: 15px;
-            text-align: center;
-            z-index: 200;
-            display: none;
-            animation: pop 0.5s forwards;
-        }
-
-        .complete-text {
-            font-size: 26px;
-            color: white;
-            margin-bottom: 20px;
-        }
-
-        .restart-btn {
-            padding: 10px 20px;
-            font-size: 20px;
-            background-color: white;
-            color: #3f51b5;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background-color 0.3s;
-        }
-
-        .restart-btn:hover {
-            background-color: #f0f0f0;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100vh; width: 100vw; font-family: "Comic Sans MS", "微软雅黑", sans-serif; background-color: #f0f8ff; overflow: hidden; }
+        .intro-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; cursor: pointer; }
+        .intro-text { font-size: 50px; color: #2e7d32; text-align: center; margin: 0 20px; animation: bounce 2s infinite ease-in-out; }
+        .intro-subtext { font-size: 24px; color: #558b2f; margin-top: 20px; animation: fadeIn 1.5s forwards; opacity: 0; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+        @keyframes fadeIn { to { opacity: 1; } }
+        @keyframes pop { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes fall { 0% { transform: translateY(calc(-100px - var(--random-top))) rotate(0deg); opacity: 1; } 100% { transform: translateY(calc(100vh + 100px)) rotate(var(--random-rotate)); opacity: 0; } }
+        .game-container { display: none; height: 100vh; width: 100vw; padding: 20px; gap: 20px; flex-direction: row; }
+        .operate-tip { font-size: 18px; color: #2e7d32; text-align: center; margin-bottom: 15px; padding: 8px 0; border-radius: 8px; background-color: rgba(255,255,255,0.7); }
+        .homes-area { flex: 1; background-color: #e8f5e9; border-radius: 15px; padding: 20px; overflow-y: auto; box-shadow: 0 4px 8px rgba(0,0,0,0.1); height: 100%; min-height: 0; }
+        .home { background-color: white; border: 8px solid transparent; border-image: url('https://www.transparenttextures.com/patterns/vines.png') 30 stretch; border-radius: 12px; padding: 0; margin-bottom: 20px; text-align: center; position: relative; width: 100%; aspect-ratio: 3/2; }
+        .home-img, .home-occupied { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; display: block; }
+        .home-occupied { position: absolute; top: 0; left: 0; display: none; }
+        .home-matched-name { position: absolute; bottom: 0; left: 0; width: 100%; font-size: 18px; color: #388e3c; font-weight: bold; display: none; background-color: rgba(255,255,255,0.8); padding: 5px 0; }
+        .animals-area { width: 220px; background-color: #fff3e0; border-radius: 15px; padding: 15px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); overflow-y: auto; height: 100%; min-height: 0; }
+        .animal { background-color: white; border: 1px solid #ffe0b2; border-radius: 8px; padding: 10px; text-align: center; cursor: grab; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: opacity 0.3s; width: 100%; max-width: 180px; margin: 0 auto; aspect-ratio: 4/5; position: relative; }
+        .animal:active { cursor: grabbing; }
+        .animal-img { width: 100%; height: 100%; object-fit: contain; border-radius: 4px; display: block; }
+        .animal.matched { opacity: 0.5; cursor: default; }
+        .toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 20px 40px; font-size: 28px; font-weight: bold; border-radius: 10px; color: white; z-index: 100; display: none; animation: pop 0.3s forwards; }
+        .toast.correct { background-color: #4caf50; }
+        .toast.wrong { background-color: #f44336; }
+        .falling-icon { position: fixed; font-size: var(--random-size); pointer-events: none; z-index: 90; --random-top: 0px; --random-rotate: 0deg; --random-size: 30px; }
+        .complete-toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: rgba(63, 81, 181, 0.9); padding: 30px 50px; border-radius: 15px; text-align: center; z-index: 200; display: none; animation: pop 0.5s forwards; }
+        .complete-text { font-size: 26px; color: white; margin-bottom: 20px; }
+        .restart-btn { padding: 10px 20px; font-size: 20px; background-color: white; color: #3f51b5; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background-color 0.3s; }
+        .restart-btn:hover { background-color: #f0f0f0; }
+        .browser-tip { position: fixed; bottom: 20px; font-size: 14px; color: #666; text-align: center; width: 100%; z-index: 999; display: none; }
     </style>
 </head>
 <body>
-    <!-- 初始文字动画：点击后直接进入游戏（无额外弹窗） -->
+    <!-- 初始文字 -->
     <div class="intro-screen" onclick="startGame()">
-        <div class="intro-text">关卡一：帮小动物找家</div>
-        <div class="intro-subtext">点击屏幕开始游戏</div>
+        <div class="intro-text" id="intro-text">关卡一：帮小动物找家</div>
+        <div class="intro-subtext" id="intro-subtext">点击屏幕开始游戏</div>
+    </div>
+
+    <!-- 浏览器限制提示 -->
+    <div class="browser-tip" id="browser-tip">
+        若未听到语音，请点击屏幕触发（浏览器安全策略限制）
     </div>
 
     <!-- 游戏主容器 -->
     <div class="game-container">
-        <!-- 左侧：家园区域 + 操作提示 -->
         <div class="homes-area">
-            <!-- 新增：家园区域提示（文字+图标） -->
-            <div class="operate-tip">🏠 找到小动物的家</div>
-            
-            <!-- 啄木鸟的家：替换为新URL -->
+            <div class="operate-tip" id="homes-tip">🏠 找到小动物的家</div>
+            <!-- 家园列表 -->
             <div class="home" ondragover="allowDrop(event)" ondrop="checkMatch(event, 'woodpecker', '啄木鸟的家')">
-                <img class="home-img" src="https://i.ibb.co/pvf34xP2/min.png" alt="啄木鸟的家">
-                <img class="home-occupied" src="https://i.ibb.co/NntjPSJx/min.png" alt="啄木鸟在家">
+                <img class="home-img" src="https://i.ibb.co/xt8S0fmG/min.png" alt="啄木鸟的家">
+                <img class="home-occupied" src="https://i.ibb.co/zhyG301M/min.png" alt="啄木鸟在家">
                 <div class="home-matched-name">啄木鸟的家</div>
             </div>
-
-            <!-- 熊的洞穴：替换为新URL -->
             <div class="home" ondragover="allowDrop(event)" ondrop="checkMatch(event, 'bear', '熊的洞穴')">
-                <img class="home-img" src="https://i.ibb.co/TBHt2JrX/min.png" alt="熊的洞穴">
-                <img class="home-occupied" src="https://i.ibb.co/wNdBxwRN/min.png" alt="熊在家">
+                <img class="home-img" src="https://i.ibb.co/JgLk3gs/min.png" alt="熊的洞穴">
+                <img class="home-occupied" src="https://i.ibb.co/8DBPNbyH/min.png" alt="熊在家">
                 <div class="home-matched-name">熊的洞穴</div>
             </div>
-
-            <!-- 鱼的家：替换为新URL -->
             <div class="home" ondragover="allowDrop(event)" ondrop="checkMatch(event, 'fish', '鱼的家')">
                 <img class="home-img" src="https://i.ibb.co/BkKNVPG/min.png" alt="鱼的家">
                 <img class="home-occupied" src="https://i.ibb.co/whbgqsTD/min.png" alt="鱼在家">
                 <div class="home-matched-name">鱼的家</div>
             </div>
-
-            <!-- 喜鹊的巢：替换为新URL -->
             <div class="home" ondragover="allowDrop(event)" ondrop="checkMatch(event, 'magpie', '喜鹊的巢')">
-                <img class="home-img" src="https://i.ibb.co/x8jDXHyW/min.png" alt="喜鹊的巢">
+                <img class="home-img" src="https://i.ibb.co/60ysVnCm/min.png" alt="喜鹊的巢">
                 <img class="home-occupied" src="https://i.ibb.co/r26xcP5L/min.png" alt="喜鹊在家">
                 <div class="home-matched-name">喜鹊的巢</div>
             </div>
-
-            <!-- 寄居蟹的家：替换为新URL -->
             <div class="home" ondragover="allowDrop(event)" ondrop="checkMatch(event, 'hermit-crab', '寄居蟹的家')">
-                <img class="home-img" src="https://i.ibb.co/JjXj6d5Z/min.png" alt="寄居蟹的家">
-                <img class="home-occupied" src="https://i.ibb.co/RpRHpp4P/min.png" alt="寄居蟹在家">
+                <img class="home-img" src="https://i.ibb.co/zVpRMBcV/min.png" alt="寄居蟹的家">
+                <img class="home-occupied" src="https://i.ibb.co/MkZg2BCm/min.png" alt="寄居蟹在家">
                 <div class="home-matched-name">寄居蟹的家</div>
             </div>
-
-            <!-- 兔子的洞穴：替换为新URL -->
             <div class="home" ondragover="allowDrop(event)" ondrop="checkMatch(event, 'rabbit', '兔子的洞穴')">
-                <img class="home-img" src="https://i.ibb.co/20Mg6pYP/min.png" alt="兔子的洞穴">
-                <img class="home-occupied" src="https://i.ibb.co/Gv1pMVkr/min.png" alt="兔子在家">
+                <img class="home-img" src="https://i.ibb.co/mCySYBFz/min.png" alt="兔子的洞穴">
+                <img class="home-occupied" src="https://i.ibb.co/LwMRghC/min.png" alt="兔子在家">
                 <div class="home-matched-name">兔子的洞穴</div>
             </div>
-
-            <!-- 松鼠的洞穴：替换为新URL -->
             <div class="home" ondragover="allowDrop(event)" ondrop="checkMatch(event, 'squirrel', '松鼠的洞穴')">
                 <img class="home-img" src="https://i.ibb.co/ynQtcQ74/min.png" alt="松鼠的洞穴">
                 <img class="home-occupied" src="https://i.ibb.co/Nnp62xhF/min.png" alt="松鼠在家">
                 <div class="home-matched-name">松鼠的洞穴</div>
             </div>
-
-            <!-- 蜜蜂的巢：替换为新URL -->
             <div class="home" ondragover="allowDrop(event)" ondrop="checkMatch(event, 'bee', '蜜蜂的巢')">
-                <img class="home-img" src="https://i.ibb.co/HLv8w3bb/min.png" alt="蜜蜂的巢">
-                <img class="home-occupied" src="https://i.ibb.co/qFLCjvBn/min.png" alt="蜜蜂在家">
+                <img class="home-img" src="https://i.ibb.co/LzbpXVFv/min.png" alt="蜜蜂的巢">
+                <img class="home-occupied" src="https://i.ibb.co/WvhRpSZw/min.png" alt="蜜蜂在家">
                 <div class="home-matched-name">蜜蜂的巢</div>
             </div>
         </div>
 
-        <!-- 右侧：动物区域 + 操作提示 -->
         <div class="animals-area">
-            <!-- 新增：动物区域提示（文字+图标） -->
-            <div class="operate-tip">📥 拖动小动物回家</div>
-            
-            <!-- 蜜蜂：替换为新URL -->
+            <div class="operate-tip" id="animals-tip">📥 拖动小动物回家</div>
+            <!-- 动物列表 -->
             <div class="animal" draggable="true" ondragstart="setDragged(event, 'bee')">
-                <img class="animal-img" src="https://i.ibb.co/cKRqGF1H/min.png" alt="蜜蜂">
+                <img class="animal-img" src="https://i.ibb.co/RGJF1VxQ/min.png" alt="蜜蜂">
             </div>
-
-            <!-- 兔子：替换为新URL -->
             <div class="animal" draggable="true" ondragstart="setDragged(event, 'rabbit')">
-                <img class="animal-img" src="https://i.ibb.co/sd7PbRc1/min.png" alt="兔子">
+                <img class="animal-img" src="https://i.ibb.co/8gL9YGRN/min.png" alt="兔子">
             </div>
-
-            <!-- 熊：替换为新URL -->
             <div class="animal" draggable="true" ondragstart="setDragged(event, 'bear')">
-                <img class="animal-img" src="https://i.ibb.co/7xtbDBM0/min.png" alt="熊">
+                <img class="animal-img" src="https://i.ibb.co/BKcKqZMf/min.png" alt="熊">
             </div>
-
-            <!-- 松鼠：替换为新URL -->
             <div class="animal" draggable="true" ondragstart="setDragged(event, 'squirrel')">
-                <img class="animal-img" src="https://i.ibb.co/Gfv1zRLT/min.png" alt="松鼠">
+                <img class="animal-img" src="https://i.ibb.co/sLvdkMd/min.png" alt="松鼠">
             </div>
-
-            <!-- 鱼：替换为新URL -->
             <div class="animal" draggable="true" ondragstart="setDragged(event, 'fish')">
-                <img class="animal-img" src="https://i.ibb.co/sJkK5Bt9/min.png" alt="鱼">
+                <img class="animal-img" src="https://i.ibb.co/dwM8hzdX/min.png" alt="鱼">
             </div>
-
-            <!-- 寄居蟹：替换为新URL -->
             <div class="animal" draggable="true" ondragstart="setDragged(event, 'hermit-crab')">
-                <img class="animal-img" src="https://i.ibb.co/Y4QPPYgt/min.png" alt="寄居蟹">
+                <img class="animal-img" src="https://i.ibb.co/6d7bVWj/min.png" alt="寄居蟹">
             </div>
-
-            <!-- 喜鹊：替换为新URL -->
             <div class="animal" draggable="true" ondragstart="setDragged(event, 'magpie')">
-                <img class="animal-img" src="https://i.ibb.co/XrZMqHHq/min.png" alt="喜鹊">
+                <img class="animal-img" src="https://i.ibb.co/nMMhs1wQ/min.png" alt="喜鹊">
             </div>
-
-            <!-- 啄木鸟：替换为新URL -->
             <div class="animal" draggable="true" ondragstart="setDragged(event, 'woodpecker')">
-                <img class="animal-img" src="https://i.ibb.co/b5zhqHDD/min.png" alt="啄木鸟">
+                <img class="animal-img" src="https://i.ibb.co/bRvNXqcJ/min.png" alt="啄木鸟">
             </div>
         </div>
     </div>
 
     <!-- 提示框 -->
-    <div class="toast correct" id="correct-toast">太棒了，答对啦！</div>
-    <div class="toast wrong" id="wrong-toast">答错啦～再试试</div>
+    <div class="toast correct" id="correct-toast">答对了，太棒啦</div>
+    <div class="toast wrong" id="wrong-toast">答错啦，再试试～</div>
 
     <!-- 完成提示 -->
     <div class="complete-toast" id="complete-toast">
-        <div class="complete-text">恭喜你！成功帮小动物们找到家了</div>
+        <div class="complete-text" id="complete-text">恭喜你！成功帮小动物们找到家了</div>
         <button class="restart-btn" onclick="restartGame()">重新开始</button>
     </div>
 
     <script>
+        // 全局变量
+        let preferredVoice = null;
+        let isVoiceInitialized = false;
+        let isAutoSpoken = false; // 标记是否已自动播报
+
+        // 初始化语音列表
+        function initVoices() {
+            const voices = window.speechSynthesis.getVoices();
+            const chineseVoices = voices.filter(voice => 
+                voice.lang.includes('zh-CN') && 
+                (voice.name.includes('Natural') || voice.name.includes('female') || voice.name.includes('女声'))
+            );
+            if (chineseVoices.length > 0) {
+                preferredVoice = chineseVoices[0];
+            }
+            isVoiceInitialized = true;
+            // 语音初始化完成后尝试自动播报
+            if (!isAutoSpoken) autoSpeakIntro();
+        }
+
+        // 监听语音加载事件并主动触发初始化
+        window.speechSynthesis.onvoiceschanged = initVoices;
+        window.speechSynthesis.getVoices(); // 唤醒语音引擎
+
+        // 语音播报函数
+        function speakText(text, options = {}) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            if (preferredVoice) utterance.voice = preferredVoice;
+            utterance.lang = 'zh-CN';
+            
+            const defaultOptions = { rate: 0.9, pitch: 1.1, volume: 1 };
+            const { rate, pitch, volume } = { ...defaultOptions, ...options };
+            utterance.rate = rate;
+            utterance.pitch = pitch;
+            utterance.volume = volume;
+
+            const processedText = text
+                .replace(/，/g, '， ')
+                .replace(/。/g, '。 ')
+                .replace(/～/g, '～ ');
+            utterance.text = processedText;
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // 自动播报初始文字
+        function autoSpeakIntro() {
+            if (isAutoSpoken) return;
+            isAutoSpoken = true;
+
+            const introText = document.getElementById('intro-text').textContent;
+            const introSubtext = document.getElementById('intro-subtext').textContent;
+            const fullText = `${introText}，${introSubtext}`;
+
+            // 尝试自动播报（不依赖点击）
+            speakText(fullText, { rate: 0.8, pitch: 1.0 });
+
+            // 显示浏览器限制提示（5秒后自动隐藏）
+            const browserTip = document.getElementById('browser-tip');
+            browserTip.style.display = 'block';
+            setTimeout(() => browserTip.style.display = 'none', 5000);
+        }
+
+        // 页面加载完成后立即触发自动播报
+        window.onload = function() {
+            // 延迟500ms确保DOM和语音引擎就绪
+            setTimeout(() => {
+                if (isVoiceInitialized) {
+                    autoSpeakIntro();
+                } else {
+                    // 语音未就绪则等待初始化完成后再播报
+                    const checkVoice = setInterval(() => {
+                        if (isVoiceInitialized) {
+                            clearInterval(checkVoice);
+                            autoSpeakIntro();
+                        }
+                    }, 100);
+                    setTimeout(() => clearInterval(checkVoice), 2000);
+                }
+            }, 500);
+        };
+
+        // 音效初始化
+        const successSound = new Audio('success.wav');
+        const failSound = new Audio('fail.wav');
+
+        // 游戏状态变量
         let draggedAnimal = null;
         const matchedAnimals = new Set();
         const totalAnimals = 8;
 
-        // 开始游戏：点击直接进入，无额外弹窗
+        // 点击屏幕进入游戏
         function startGame() {
+            window.speechSynthesis.cancel();
             document.querySelector('.intro-screen').style.display = 'none';
             document.querySelector('.game-container').style.display = 'flex';
+
+            setTimeout(() => {
+                speakText("拖动小动物找到他的家", { rate: 0.9, pitch: 1.2 });
+            }, 500);
         }
 
         // 记录拖拽动物
         function setDragged(event, animalId) {
-            if (!matchedAnimals.has(animalId)) {
-                draggedAnimal = animalId;
-            }
+            if (!matchedAnimals.has(animalId)) draggedAnimal = animalId;
         }
 
         // 允许放置
@@ -429,7 +250,7 @@
             event.preventDefault();
         }
 
-        // 表情全屏下落
+        // 表情下落效果
         function createFallingIcons(isCorrect, count = 15) {
             document.querySelectorAll('.falling-icon').forEach(icon => icon.remove());
             const icon = isCorrect ? '👍' : '😭';
@@ -452,7 +273,7 @@
             }
         }
 
-        // 检查匹配
+        // 检查匹配（仅播报结果提示）
         function checkMatch(event, homeAnimalId, homeName) {
             event.preventDefault();
             if (!draggedAnimal) return;
@@ -462,6 +283,9 @@
             const isCorrect = draggedAnimal === homeAnimalId;
 
             if (isCorrect) {
+                speakText(correctToast.textContent, { rate: 1.0, pitch: 1.3 });
+                successSound.play().catch(e => console.log('成功音效播放失败:', e));
+
                 correctToast.style.display = 'block';
                 createFallingIcons(true);
                 setTimeout(() => correctToast.style.display = 'none', 2000);
@@ -480,10 +304,15 @@
 
                 if (matchedAnimals.size === totalAnimals) {
                     setTimeout(() => {
+                        const completeText = document.getElementById('complete-text').textContent;
+                        speakText(completeText, { rate: 0.9, pitch: 1.4 });
                         document.getElementById('complete-toast').style.display = 'block';
                     }, 1000);
                 }
             } else {
+                speakText(wrongToast.textContent, { rate: 0.8, pitch: 0.9 });
+                failSound.play().catch(e => console.log('失败音效播放失败:', e));
+
                 wrongToast.style.display = 'block';
                 createFallingIcons(false);
                 setTimeout(() => wrongToast.style.display = 'none', 2000);
@@ -492,25 +321,28 @@
             draggedAnimal = null;
         }
 
-        // 重新开始
+        // 重新开始游戏
         function restartGame() {
+            window.speechSynthesis.cancel();
             document.getElementById('complete-toast').style.display = 'none';
             document.querySelector('.intro-screen').style.display = 'flex';
             document.querySelector('.game-container').style.display = 'none';
             matchedAnimals.clear();
+            isAutoSpoken = false; // 重置自动播报标记
 
             document.querySelectorAll('.home').forEach(home => {
                 home.querySelector('.home-img').style.display = 'block';
                 home.querySelector('.home-occupied').style.display = 'none';
                 home.querySelector('.home-matched-name').style.display = 'none';
             });
-
             document.querySelectorAll('.animal').forEach(animal => {
                 animal.classList.remove('matched');
                 animal.setAttribute('draggable', 'true');
             });
 
             document.querySelectorAll('.falling-icon').forEach(icon => icon.remove());
+            // 重新显示后再次尝试自动播报
+            setTimeout(autoSpeakIntro, 500);
         }
     </script>
 </body>
