@@ -2,7 +2,6 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <!-- 关键：添加移动端视口设置，禁止缩放，适配设备宽度 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>森林小管家</title>
     <style>
@@ -10,19 +9,17 @@
             height: 100%;
             margin: 0;
             padding: 0;
-            /* 防止横屏时内容溢出 */
-            overflow: hidden;
+            overflow: hidden; /* 禁止滚动，确保内容在一屏内 */
         }
         body {
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center; /* 垂直居中，适配横屏高度不足问题 */
+            justify-content: center; /* 垂直居中基准，方便横屏微调 */
             background-image: url("https://i.ibb.co/nsCWBK5c/min.png");
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            /* 横屏时背景图防拉伸 */
             background-attachment: fixed;
         }
 
@@ -30,9 +27,9 @@
             font-family: "Comic Sans MS", "Marker Felt", "微软雅黑", sans-serif;
             font-size: 75px;
             color: rgba(0, 0, 0, 0.8);
-            margin: 0 20px 40px; /* 调整边距，避免顶边/底边拥挤 */
+            margin: 0 20px 60px; /* 底部间距控制标题与按钮的距离 */
             text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.6);
-            text-align: center; /* 横屏时文字过长换行居中 */
+            text-align: center;
         }
 
         .start-button {
@@ -45,8 +42,7 @@
             cursor: pointer;
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
             font-family: "Comic Sans MS", "微软雅黑", sans-serif;
-            margin: 0 20px; /* 左右留边，避免横屏时贴边 */
-            /* 移动端触摸优化：增大点击区域（最小48px×48px） */
+            margin: 0 20px;
             min-width: 180px;
             min-height: 56px;
             display: flex;
@@ -61,25 +57,25 @@
 
         .browser-tip {
             position: fixed;
-            bottom: 15px; /* 横屏时降低底部距离，避免遮挡 */
+            bottom: 15px;
             font-size: 14px;
             color: #333;
             text-align: center;
-            width: 90%; /* 不占满宽度，留边更美观 */
+            width: 90%;
             padding: 6px 0;
             background-color: rgba(255,255,255,0.9);
             border-radius: 8px;
             display: none;
-            z-index: 10; /* 确保在最上层，不被遮挡 */
+            z-index: 10;
         }
 
-        /* 媒体查询：适配手机横屏（宽度>高度，且屏幕宽度≤900px） */
+        /* 横屏适配核心调整 */
         @media (orientation: landscape) and (max-width: 900px) {
             .game-title {
-                /* 字体大小随屏幕宽度缩放，横屏时更小 */
-                font-size: 5vw; 
-                max-font-size: 48px; /* 限制最大尺寸，避免过大 */
-                margin-bottom: 25px; /* 减少标题与按钮间距，节省垂直空间 */
+                font-size: 5vw;
+                max-font-size: 48px;
+                margin-bottom: 30px; /* 大幅减少标题与按钮的间距 */
+                margin-top: -20px; /* 标题上移，间接带动按钮上移 */
             }
 
             .start-button {
@@ -88,27 +84,29 @@
                 padding: 12px 30px;
                 min-width: 150px;
                 min-height: 50px;
+                /* 关键：通过负margin进一步上移按钮，适应横屏高度限制 */
+                margin-top: -10px;
             }
 
             .browser-tip {
                 font-size: 12px;
                 bottom: 10px;
-                padding: 4px 0;
             }
         }
 
-        /* 额外适配小屏横屏（如手机） */
+        /* 小屏手机横屏（如iPhone SE等） */
         @media (orientation: landscape) and (max-width: 480px) {
             .game-title {
                 font-size: 4.5vw;
-                margin-left: 15px;
-                margin-right: 15px;
+                margin-bottom: 20px; /* 更小的标题间距 */
+                margin-top: -30px; /* 进一步上移标题 */
             }
 
             .start-button {
                 font-size: 3.5vw;
                 padding: 10px 25px;
                 min-width: 130px;
+                margin-top: -20px; /* 按钮更靠上 */
             }
         }
     </style>
@@ -142,7 +140,6 @@
             }
         }
 
-        // 监听语音加载事件
         window.speechSynthesis.onvoiceschanged = initVoices;
         window.speechSynthesis.getVoices();
 
@@ -171,7 +168,6 @@
             }
         }
 
-        // 页面加载完成后初始化
         window.onload = function() {
             setTimeout(() => {
                 if (isVoiceInitialized) {
@@ -195,7 +191,6 @@
                 }
             }, 300);
 
-            // 点击页面任意位置触发语音（应对浏览器安全限制）
             document.body.addEventListener('click', function() {
                 if (!isAutoSpoken) {
                     speakWelcomeText();
@@ -203,7 +198,6 @@
             }, { once: true });
         }
 
-        // 跳转函数：点击后进入关卡一页面
         function goToLevel1() {
             window.speechSynthesis.cancel();
             window.location.href = "level1.html";
