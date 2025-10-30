@@ -28,7 +28,6 @@
             text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.6);
         }
 
-        /* 按钮上移：通过减少顶部间距实现 */
         .start-button {
             background-color: #FF9800;
             color: white;
@@ -39,7 +38,6 @@
             cursor: pointer;
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
             font-family: "Comic Sans MS", "微软雅黑", sans-serif;
-            /* 关键调整：顶部间距设为40px（比之前的auto更靠上），底部间距0 */
             margin-top: 140px; 
             margin-bottom: 0;
         }
@@ -48,17 +46,123 @@
             background-color: #FF5722;
             transform: scale(1.05);
         }
+
+        .browser-tip {
+            position: fixed;
+            bottom: 20px;
+            font-size: 14px;
+            color: #333;
+            text-align: center;
+            width: 100%;
+            padding: 5px;
+            background-color: rgba(255,255,255,0.8);
+            border-radius: 4px;
+            display: none;
+        }
     </style>
 </head>
 <body>
     <h1 class="game-title">森林小管家</h1>
-    <!-- 点击按钮跳转到关卡一页面（替换原alert） -->
     <button class="start-button" onclick="goToLevel1()">开始游戏</button>
+    <div class="browser-tip" id="browser-tip">
+        若未听到语音，请点击页面任意位置触发（浏览器安全策略限制）
+    </div>
 
     <script>
+        // 语音播报相关变量
+        let preferredVoice = null;
+        let isVoiceInitialized = false;
+        let isAutoSpoken = false;
+
+        // 初始化语音列表
+        function initVoices() {
+            const voices = window.speechSynthesis.getVoices();
+            // 筛选中文语音（优先女声）
+            const chineseVoices = voices.filter(voice => 
+                voice.lang.includes('zh-CN') && 
+                (voice.name.includes('Natural') || voice.name.includes('female') || voice.name.includes('女声'))
+            );
+            if (chineseVoices.length > 0) {
+                preferredVoice = chineseVoices[0];
+            }
+            isVoiceInitialized = true;
+            // 语音就绪后尝试播报
+            if (!isAutoSpoken) {
+                speakWelcomeText();
+            }
+        }
+
+        // 监听语音加载事件
+        window.speechSynthesis.onvoiceschanged = initVoices;
+        // 主动唤醒语音引擎（部分浏览器需要触发后才加载语音列表）
+        window.speechSynthesis.getVoices();
+
+        // 播报欢迎文本
+        function speakWelcomeText() {
+            if (isAutoSpoken) return;
+            isAutoSpoken = true;
+
+            const text = "森林小管家，点击开始进入游戏";
+            const utterance = new SpeechSynthesisUtterance(text);
+            if (preferredVoice) {
+                utterance.voice = preferredVoice;
+            }
+            utterance.lang = 'zh-CN';
+            utterance.rate = 0.9; // 语速稍慢，适合儿童
+            utterance.pitch = 1.1; // 音调略高，更亲切
+            utterance.volume = 1;
+
+            try {
+                window.speechSynthesis.speak(utterance);
+            } catch (e) {
+                // 播报失败时显示提示
+                document.getElementById('browser-tip').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('browser-tip').style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // 页面加载完成后初始化
+        window.onload = function() {
+            // 延迟触发，确保DOM和语音引擎就绪
+            setTimeout(() => {
+                if (isVoiceInitialized) {
+                    speakWelcomeText();
+                } else {
+                    // 语音未就绪时等待
+                    const checkVoice = setInterval(() => {
+                        if (isVoiceInitialized) {
+                            clearInterval(checkVoice);
+                            speakWelcomeText();
+                        }
+                    }, 100);
+                    // 2秒后仍未就绪则显示提示
+                    setTimeout(() => {
+                        clearInterval(checkVoice);
+                        if (!isAutoSpoken) {
+                            document.getElementById('browser-tip').style.display = 'block';
+                            setTimeout(() => {
+                                document.getElementById('browser-tip').style.display = 'none';
+                            }, 5000);
+                        }
+                    }, 2000);
+                }
+            }, 300);
+
+            // 点击页面任意位置触发语音（应对浏览器安全限制）
+            document.body.addEventListener('click', function() {
+                if (!isAutoSpoken) {
+                    speakWelcomeText();
+                }
+            }, { once: true });
+        }
+
         // 跳转函数：点击后进入关卡一页面
         function goToLevel1() {
-            // 假设关卡一的HTML文件名为"level1.html"，且与首页在同一文件夹
+            // 停止当前语音播报
+            window.speechSynthesis.cancel();
+            // 跳转至关卡一（确保文件名与实际一致）
             window.location.href = "level1.html";
         }
     </script>
