@@ -14,7 +14,7 @@
         html, body {
             height: 100vh;
             width: 100vw;
-            font-family: "微软雅黑", sans-serif;
+            font-family: "Comic Sans MS", "微软雅黑", sans-serif;
             background-color: #f0f8ff;
             overflow: hidden;
         }
@@ -87,9 +87,21 @@
             flex-direction: row;
         }
 
-        /* 家园区域 */
+        /* 操作提示样式：统一风格 */
+        .operate-tip {
+            font-size: 18px;
+            color: #2e7d32;
+            text-align: center;
+            margin-bottom: 15px;
+            padding: 8px 0;
+            border-radius: 8px;
+            background-color: rgba(255,255,255,0.7);
+        }
+
+        /* 家园区域：左侧添加提示，边框改为藤蔓风格 */
         .homes-area {
-            flex: 3;
+            /* 宽度自适应剩余空间，不再固定flex比例 */
+            flex: 1;
             background-color: #e8f5e9;
             border-radius: 15px;
             padding: 20px;
@@ -99,10 +111,13 @@
             min-height: 0;
         }
 
+        /* 核心：家园藤蔓边框（用森林藤蔓图片作为边框） */
         .home {
             background-color: white;
-            border: 3px dashed #81c784;
-            border-radius: 10px;
+            /* 藤蔓边框：使用透明藤蔓图片，设置边框宽度和切片 */
+            border: 8px solid transparent;
+            border-image: url('https://www.transparenttextures.com/patterns/vines.png') 30 stretch;
+            border-radius: 12px;
             padding: 0;
             margin-bottom: 20px;
             text-align: center;
@@ -115,7 +130,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            border-radius: 7px;
+            border-radius: 4px; /* 适配藤蔓边框内边距 */
             display: block;
         }
 
@@ -139,35 +154,36 @@
             padding: 5px 0;
         }
 
-        /* 动物区域（右侧）：整体调小，增加间隙 */
+        /* 动物区域（右侧）：宽度缩减至适配图片，添加提示，强化白底 */
         .animals-area {
-            flex: 1;
+            /* 关键：固定宽度，与动物图片（max-width:180px）适配，含padding总宽220px */
+            width: 220px;
             background-color: #fff3e0;
             border-radius: 15px;
-            padding: 15px; /* 减小内边距 */
+            padding: 15px;
             display: flex;
             flex-direction: column;
-            gap: 12px; /* 缩小格子间距 */
+            gap: 12px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             overflow-y: auto;
             height: 100%;
             min-height: 0;
         }
 
-        /* 动物格子：增加白底效果，整体缩小，保持4:5比例 */
+        /* 动物格子：完全填充白色背景，无多余空隙 */
         .animal {
-            background-color: white; /* 强化白底 */
-            border: 1px solid #ffe0b2; /* 增加浅色边框，突出白底 */
+            background-color: white; /* 纯白背景填充 */
+            border: 1px solid #ffe0b2;
             border-radius: 8px;
-            padding: 10px; /* 增加内边距，形成明显白底边框 */
+            padding: 10px; /* 内边距保持，形成白底边框感 */
             text-align: center;
             cursor: grab;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             transition: opacity 0.3s;
             width: 100%;
-            max-width: 180px; /* 限制最大宽度，整体缩小 */
-            margin: 0 auto; /* 居中显示 */
-            aspect-ratio: 4/5; /* 保持原有比例不变 */
+            max-width: 180px; /* 与动物图片尺寸适配 */
+            margin: 0 auto;
+            aspect-ratio: 4/5; /* 保持原有比例 */
             position: relative;
         }
 
@@ -175,11 +191,11 @@
             cursor: grabbing;
         }
 
-        /* 动物图片：适应缩小后的格子，保持比例 */
+        /* 动物图片：完整显示在白底内 */
         .animal-img {
             width: 100%;
             height: 100%;
-            object-fit: contain; /* 改为contain，避免裁剪，完整显示在白底内 */
+            object-fit: contain;
             border-radius: 4px;
             display: block;
         }
@@ -263,7 +279,7 @@
     </style>
 </head>
 <body>
-    <!-- 初始文字动画 -->
+    <!-- 初始文字动画：点击后直接进入游戏（无额外弹窗） -->
     <div class="intro-screen" onclick="startGame()">
         <div class="intro-text">关卡一：帮小动物找家</div>
         <div class="intro-subtext">点击屏幕开始游戏</div>
@@ -271,105 +287,111 @@
 
     <!-- 游戏主容器 -->
     <div class="game-container">
-        <!-- 左侧：家园区域 -->
+        <!-- 左侧：家园区域 + 操作提示 -->
         <div class="homes-area">
-            <!-- 啄木鸟的家 -->
+            <!-- 新增：家园区域提示（文字+图标） -->
+            <div class="operate-tip">🏠 找到小动物的家</div>
+            
+            <!-- 啄木鸟的家：替换为新URL -->
             <div class="home" ondragover="allowDrop(event)" ondrop="checkMatch(event, 'woodpecker', '啄木鸟的家')">
-                <img class="home-img" src="https://i.ibb.co/7tTCCyq2/image.png" alt="啄木鸟的家">
-                <img class="home-occupied" src="https://i.ibb.co/CpK1jckb/image.png" alt="啄木鸟在家">
+                <img class="home-img" src="https://i.ibb.co/pvf34xP2/min.png" alt="啄木鸟的家">
+                <img class="home-occupied" src="https://i.ibb.co/NntjPSJx/min.png" alt="啄木鸟在家">
                 <div class="home-matched-name">啄木鸟的家</div>
             </div>
 
-            <!-- 熊的洞穴 -->
+            <!-- 熊的洞穴：替换为新URL -->
             <div class="home" ondragover="allowDrop(event)" ondrop="checkMatch(event, 'bear', '熊的洞穴')">
-                <img class="home-img" src="https://i.ibb.co/gM4dtGq5/image.png" alt="熊的洞穴">
-                <img class="home-occupied" src="https://i.ibb.co/xQshfdn/image.png" alt="熊在家">
+                <img class="home-img" src="https://i.ibb.co/TBHt2JrX/min.png" alt="熊的洞穴">
+                <img class="home-occupied" src="https://i.ibb.co/wNdBxwRN/min.png" alt="熊在家">
                 <div class="home-matched-name">熊的洞穴</div>
             </div>
 
-            <!-- 鱼的家 -->
+            <!-- 鱼的家：替换为新URL -->
             <div class="home" ondragover="allowDrop(event)" ondrop="checkMatch(event, 'fish', '鱼的家')">
-                <img class="home-img" src="https://i.ibb.co/NgSXsLxP/image.png" alt="鱼的家">
-                <img class="home-occupied" src="https://i.ibb.co/mFRtMp2d/image.png" alt="鱼在家">
+                <img class="home-img" src="https://i.ibb.co/BkKNVPG/min.png" alt="鱼的家">
+                <img class="home-occupied" src="https://i.ibb.co/whbgqsTD/min.png" alt="鱼在家">
                 <div class="home-matched-name">鱼的家</div>
             </div>
 
-            <!-- 喜鹊的巢 -->
+            <!-- 喜鹊的巢：替换为新URL -->
             <div class="home" ondragover="allowDrop(event)" ondrop="checkMatch(event, 'magpie', '喜鹊的巢')">
-                <img class="home-img" src="https://i.ibb.co/BHZJMRpG/image.png" alt="喜鹊的巢">
-                <img class="home-occupied" src="https://i.ibb.co/MxXXkvPD/image.png" alt="喜鹊在家">
+                <img class="home-img" src="https://i.ibb.co/x8jDXHyW/min.png" alt="喜鹊的巢">
+                <img class="home-occupied" src="https://i.ibb.co/r26xcP5L/min.png" alt="喜鹊在家">
                 <div class="home-matched-name">喜鹊的巢</div>
             </div>
 
-            <!-- 寄居蟹的家 -->
+            <!-- 寄居蟹的家：替换为新URL -->
             <div class="home" ondragover="allowDrop(event)" ondrop="checkMatch(event, 'hermit-crab', '寄居蟹的家')">
-                <img class="home-img" src="https://i.ibb.co/0jLkxvtz/image.png" alt="寄居蟹的家">
-                <img class="home-occupied" src="https://i.ibb.co/60m9nzNd/image.png" alt="寄居蟹在家">
+                <img class="home-img" src="https://i.ibb.co/JjXj6d5Z/min.png" alt="寄居蟹的家">
+                <img class="home-occupied" src="https://i.ibb.co/RpRHpp4P/min.png" alt="寄居蟹在家">
                 <div class="home-matched-name">寄居蟹的家</div>
             </div>
 
-            <!-- 兔子的洞穴 -->
+            <!-- 兔子的洞穴：替换为新URL -->
             <div class="home" ondragover="allowDrop(event)" ondrop="checkMatch(event, 'rabbit', '兔子的洞穴')">
-                <img class="home-img" src="https://i.ibb.co/0yt7HjRH/image.png" alt="兔子的洞穴">
-                <img class="home-occupied" src="https://i.ibb.co/nsxsY2wX/image.png" alt="兔子在家">
+                <img class="home-img" src="https://i.ibb.co/20Mg6pYP/min.png" alt="兔子的洞穴">
+                <img class="home-occupied" src="https://i.ibb.co/Gv1pMVkr/min.png" alt="兔子在家">
                 <div class="home-matched-name">兔子的洞穴</div>
             </div>
 
-            <!-- 松鼠的洞穴 -->
+            <!-- 松鼠的洞穴：替换为新URL -->
             <div class="home" ondragover="allowDrop(event)" ondrop="checkMatch(event, 'squirrel', '松鼠的洞穴')">
-                <img class="home-img" src="https://i.ibb.co/fdRJDG5J/image.png" alt="松鼠的洞穴">
-                <img class="home-occupied" src="https://i.ibb.co/2Y6gDybK/image.png" alt="松鼠在家">
+                <img class="home-img" src="https://i.ibb.co/ynQtcQ74/min.png" alt="松鼠的洞穴">
+                <img class="home-occupied" src="https://i.ibb.co/Nnp62xhF/min.png" alt="松鼠在家">
                 <div class="home-matched-name">松鼠的洞穴</div>
             </div>
 
-            <!-- 蜜蜂的巢 -->
+            <!-- 蜜蜂的巢：替换为新URL -->
             <div class="home" ondragover="allowDrop(event)" ondrop="checkMatch(event, 'bee', '蜜蜂的巢')">
-                <img class="home-img" src="https://i.ibb.co/xqwZY3FV/image.png" alt="蜜蜂的巢">
-                <img class="home-occupied" src="https://i.ibb.co/Qv44HSVn/image.png" alt="蜜蜂在家">
+                <img class="home-img" src="https://i.ibb.co/HLv8w3bb/min.png" alt="蜜蜂的巢">
+                <img class="home-occupied" src="https://i.ibb.co/qFLCjvBn/min.png" alt="蜜蜂在家">
                 <div class="home-matched-name">蜜蜂的巢</div>
             </div>
         </div>
 
-        <!-- 右侧：动物区域 -->
+        <!-- 右侧：动物区域 + 操作提示 -->
         <div class="animals-area">
-            <!-- 蜜蜂 -->
+            <!-- 新增：动物区域提示（文字+图标） -->
+            <div class="operate-tip">📥 拖动小动物回家</div>
+            
+            <!-- 蜜蜂：替换为新URL -->
             <div class="animal" draggable="true" ondragstart="setDragged(event, 'bee')">
-                <img class="animal-img" src="https://i.ibb.co/jZ820YfS/image.png" alt="蜜蜂">
+                <img class="animal-img" src="https://i.ibb.co/cKRqGF1H/min.png" alt="蜜蜂">
             </div>
 
-            <!-- 兔子 -->
+            <!-- 兔子：替换为新URL -->
             <div class="animal" draggable="true" ondragstart="setDragged(event, 'rabbit')">
-                <img class="animal-img" src="https://i.ibb.co/1YqKVFN9/image.png" alt="兔子">
+                <img class="animal-img" src="https://i.ibb.co/sd7PbRc1/min.png" alt="兔子">
             </div>
 
-            <!-- 熊 -->
+            <!-- 熊：替换为新URL -->
             <div class="animal" draggable="true" ondragstart="setDragged(event, 'bear')">
-                <img class="animal-img" src="https://i.ibb.co/MkPYJfXB/image.png" alt="熊">
+                <img class="animal-img" src="https://i.ibb.co/7xtbDBM0/min.png" alt="熊">
             </div>
 
-            <!-- 松鼠 -->
+            <!-- 松鼠：替换为新URL -->
             <div class="animal" draggable="true" ondragstart="setDragged(event, 'squirrel')">
-                <img class="animal-img" src="https://i.ibb.co/yn7X3Gns/image.png" alt="松鼠">
+                <img class="animal-img" src="https://i.ibb.co/Gfv1zRLT/min.png" alt="松鼠">
             </div>
 
-            <!-- 鱼 -->
+            <!-- 鱼：替换为新URL -->
             <div class="animal" draggable="true" ondragstart="setDragged(event, 'fish')">
-                <img class="animal-img" src="https://i.ibb.co/LX8sYbfg/image.png" alt="鱼">
+                <img class="animal-img" src="https://i.ibb.co/sJkK5Bt9/min.png" alt="鱼">
             </div>
 
-            <!-- 寄居蟹 -->
+            <!-- 寄居蟹：替换为新URL -->
             <div class="animal" draggable="true" ondragstart="setDragged(event, 'hermit-crab')">
-                <img class="animal-img" src="https://i.ibb.co/BHm3bqNF/image.png" alt="寄居蟹">
+                <img class="animal-img" src="https://i.ibb.co/Y4QPPYgt/min.png" alt="寄居蟹">
             </div>
 
-            <!-- 喜鹊 -->
+            <!-- 喜鹊：替换为新URL -->
             <div class="animal" draggable="true" ondragstart="setDragged(event, 'magpie')">
-                <img class="animal-img" src="https://i.ibb.co/tpXGfD0b/image.png" alt="喜鹊">
+                <img class="animal-img" src="https://i.ibb.co/XrZMqHHq/min.png" alt="喜鹊">
             </div>
 
-            <!-- 啄木鸟 -->
+            <!-- 啄木鸟：替换为新URL -->
             <div class="animal" draggable="true" ondragstart="setDragged(event, 'woodpecker')">
-                <img class="animal-img" src="https://i.ibb.co/ynvfGQG7/image.png" alt="啄木鸟">
+                <img class="animal-img" src="https://i.ibb.co/b5zhqHDD/min.png" alt="啄木鸟">
             </div>
         </div>
     </div>
@@ -389,7 +411,7 @@
         const matchedAnimals = new Set();
         const totalAnimals = 8;
 
-        // 开始游戏
+        // 开始游戏：点击直接进入，无额外弹窗
         function startGame() {
             document.querySelector('.intro-screen').style.display = 'none';
             document.querySelector('.game-container').style.display = 'flex';
