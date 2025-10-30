@@ -2,30 +2,37 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <!-- 关键：添加移动端视口设置，禁止缩放，适配设备宽度 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>森林小管家</title>
     <style>
         html, body {
             height: 100%;
             margin: 0;
             padding: 0;
+            /* 防止横屏时内容溢出 */
+            overflow: hidden;
         }
         body {
             display: flex;
             flex-direction: column;
-            align-items: center; /* 水平居中 */
+            align-items: center;
+            justify-content: center; /* 垂直居中，适配横屏高度不足问题 */
             background-image: url("https://i.ibb.co/nsCWBK5c/min.png");
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
+            /* 横屏时背景图防拉伸 */
+            background-attachment: fixed;
         }
 
         .game-title {
             font-family: "Comic Sans MS", "Marker Felt", "微软雅黑", sans-serif;
             font-size: 75px;
             color: rgba(0, 0, 0, 0.8);
-            margin-top: 160px; /* 标题距离顶部位置不变 */
-            margin-bottom: 0;
+            margin: 0 20px 40px; /* 调整边距，避免顶边/底边拥挤 */
             text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.6);
+            text-align: center; /* 横屏时文字过长换行居中 */
         }
 
         .start-button {
@@ -38,26 +45,71 @@
             cursor: pointer;
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
             font-family: "Comic Sans MS", "微软雅黑", sans-serif;
-            margin-top: 140px; 
-            margin-bottom: 0;
+            margin: 0 20px; /* 左右留边，避免横屏时贴边 */
+            /* 移动端触摸优化：增大点击区域（最小48px×48px） */
+            min-width: 180px;
+            min-height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .start-button:hover {
+        .start-button:hover, .start-button:active {
             background-color: #FF5722;
             transform: scale(1.05);
         }
 
         .browser-tip {
             position: fixed;
-            bottom: 20px;
+            bottom: 15px; /* 横屏时降低底部距离，避免遮挡 */
             font-size: 14px;
             color: #333;
             text-align: center;
-            width: 100%;
-            padding: 5px;
-            background-color: rgba(255,255,255,0.8);
-            border-radius: 4px;
+            width: 90%; /* 不占满宽度，留边更美观 */
+            padding: 6px 0;
+            background-color: rgba(255,255,255,0.9);
+            border-radius: 8px;
             display: none;
+            z-index: 10; /* 确保在最上层，不被遮挡 */
+        }
+
+        /* 媒体查询：适配手机横屏（宽度>高度，且屏幕宽度≤900px） */
+        @media (orientation: landscape) and (max-width: 900px) {
+            .game-title {
+                /* 字体大小随屏幕宽度缩放，横屏时更小 */
+                font-size: 5vw; 
+                max-font-size: 48px; /* 限制最大尺寸，避免过大 */
+                margin-bottom: 25px; /* 减少标题与按钮间距，节省垂直空间 */
+            }
+
+            .start-button {
+                font-size: 4vw;
+                max-font-size: 24px;
+                padding: 12px 30px;
+                min-width: 150px;
+                min-height: 50px;
+            }
+
+            .browser-tip {
+                font-size: 12px;
+                bottom: 10px;
+                padding: 4px 0;
+            }
+        }
+
+        /* 额外适配小屏横屏（如手机） */
+        @media (orientation: landscape) and (max-width: 480px) {
+            .game-title {
+                font-size: 4.5vw;
+                margin-left: 15px;
+                margin-right: 15px;
+            }
+
+            .start-button {
+                font-size: 3.5vw;
+                padding: 10px 25px;
+                min-width: 130px;
+            }
         }
     </style>
 </head>
@@ -77,7 +129,6 @@
         // 初始化语音列表
         function initVoices() {
             const voices = window.speechSynthesis.getVoices();
-            // 筛选中文语音（优先女声）
             const chineseVoices = voices.filter(voice => 
                 voice.lang.includes('zh-CN') && 
                 (voice.name.includes('Natural') || voice.name.includes('female') || voice.name.includes('女声'))
@@ -86,7 +137,6 @@
                 preferredVoice = chineseVoices[0];
             }
             isVoiceInitialized = true;
-            // 语音就绪后尝试播报
             if (!isAutoSpoken) {
                 speakWelcomeText();
             }
@@ -94,7 +144,6 @@
 
         // 监听语音加载事件
         window.speechSynthesis.onvoiceschanged = initVoices;
-        // 主动唤醒语音引擎（部分浏览器需要触发后才加载语音列表）
         window.speechSynthesis.getVoices();
 
         // 播报欢迎文本
@@ -108,14 +157,13 @@
                 utterance.voice = preferredVoice;
             }
             utterance.lang = 'zh-CN';
-            utterance.rate = 0.9; // 语速稍慢，适合儿童
-            utterance.pitch = 1.1; // 音调略高，更亲切
+            utterance.rate = 0.9;
+            utterance.pitch = 1.1;
             utterance.volume = 1;
 
             try {
                 window.speechSynthesis.speak(utterance);
             } catch (e) {
-                // 播报失败时显示提示
                 document.getElementById('browser-tip').style.display = 'block';
                 setTimeout(() => {
                     document.getElementById('browser-tip').style.display = 'none';
@@ -125,19 +173,16 @@
 
         // 页面加载完成后初始化
         window.onload = function() {
-            // 延迟触发，确保DOM和语音引擎就绪
             setTimeout(() => {
                 if (isVoiceInitialized) {
                     speakWelcomeText();
                 } else {
-                    // 语音未就绪时等待
                     const checkVoice = setInterval(() => {
                         if (isVoiceInitialized) {
                             clearInterval(checkVoice);
                             speakWelcomeText();
                         }
                     }, 100);
-                    // 2秒后仍未就绪则显示提示
                     setTimeout(() => {
                         clearInterval(checkVoice);
                         if (!isAutoSpoken) {
@@ -160,9 +205,7 @@
 
         // 跳转函数：点击后进入关卡一页面
         function goToLevel1() {
-            // 停止当前语音播报
             window.speechSynthesis.cancel();
-            // 跳转至关卡一（确保文件名与实际一致）
             window.location.href = "level1.html";
         }
     </script>
